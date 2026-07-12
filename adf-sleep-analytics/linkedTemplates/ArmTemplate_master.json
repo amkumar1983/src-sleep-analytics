@@ -1,0 +1,98 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adf-sleep-analytics"
+		},
+		"lank_ser_adls_bronze_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'lank_ser_adls_bronze'"
+		},
+		"lnk_ftp_to_raw_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'lnk_ftp_to_raw'"
+		},
+		"lnk_ser_FtpServer_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'lnk_ser_FtpServer'"
+		},
+		"lnk_ser_databricks_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'lnk_ser_databricks'"
+		},
+		"lank_ser_adls_bronze_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://stsleepanalytics.dfs.core.windows.net/"
+		},
+		"lnk_ftp_to_raw_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://stsleepanalytics.dfs.core.windows.net/"
+		},
+		"lnk_ser_FtpServer_properties_typeProperties_host": {
+			"type": "string",
+			"defaultValue": "192.168.0.103"
+		},
+		"lnk_ser_FtpServer_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "adfuser"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "adf-sleep-analytics_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"lank_ser_adls_bronze_accountKey": {
+						"value": "[parameters('lank_ser_adls_bronze_accountKey')]"
+					},
+					"lnk_ftp_to_raw_accountKey": {
+						"value": "[parameters('lnk_ftp_to_raw_accountKey')]"
+					},
+					"lnk_ser_databricks_accessToken": {
+						"value": "[parameters('lnk_ser_databricks_accessToken')]"
+					},
+					"lnk_ser_FtpServer_password": {
+						"value": "[parameters('lnk_ser_FtpServer_password')]"
+					},
+					"lank_ser_adls_bronze_properties_typeProperties_url": {
+						"value": "[parameters('lank_ser_adls_bronze_properties_typeProperties_url')]"
+					},
+					"lnk_ftp_to_raw_properties_typeProperties_url": {
+						"value": "[parameters('lnk_ftp_to_raw_properties_typeProperties_url')]"
+					},
+					"lnk_ser_FtpServer_properties_typeProperties_host": {
+						"value": "[parameters('lnk_ser_FtpServer_properties_typeProperties_host')]"
+					},
+					"lnk_ser_FtpServer_properties_typeProperties_userName": {
+						"value": "[parameters('lnk_ser_FtpServer_properties_typeProperties_userName')]"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}

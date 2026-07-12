@@ -1,0 +1,650 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adf-sleep-analytics"
+		},
+		"lank_ser_adls_bronze_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'lank_ser_adls_bronze'"
+		},
+		"lnk_ftp_to_raw_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'lnk_ftp_to_raw'"
+		},
+		"lnk_ser_FtpServer_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'lnk_ser_FtpServer'"
+		},
+		"lnk_ser_databricks_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'lnk_ser_databricks'"
+		},
+		"lank_ser_adls_bronze_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://stsleepanalytics.dfs.core.windows.net/"
+		},
+		"lnk_ftp_to_raw_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://stsleepanalytics.dfs.core.windows.net/"
+		},
+		"lnk_ser_FtpServer_properties_typeProperties_host": {
+			"type": "string",
+			"defaultValue": "192.168.0.103"
+		},
+		"lnk_ser_FtpServer_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "adfuser"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/sleep-analytics-pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy-raw-to-bronze",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"maxConcurrentConnections": 16,
+									"recursive": true,
+									"wildcardFolderPath": {
+										"value": "@concat( 'source=ftp/sleep-data_',formatDateTime(pipeline().TriggerTime,'dd-MM-yyyy'))",
+										"type": "Expression"
+									},
+									"wildcardFileName": "*.json",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"maxConcurrentConnections": 16,
+									"copyBehavior": "PreserveHierarchy"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "sink_raw",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "sink_bronze",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "copy-ftp-to-raw",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "FtpReadSettings",
+									"maxConcurrentConnections": 16,
+									"recursive": true,
+									"wildcardFolderPath": "CPAP/sleep-data",
+									"wildcardFileName": "*.json",
+									"enablePartitionDiscovery": false,
+									"useBinaryTransfer": true,
+									"disableChunking": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"maxConcurrentConnections": 16,
+									"copyBehavior": "PreserveHierarchy"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "source_dataset",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "sink_raw",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Get Metadata1",
+						"type": "GetMetadata",
+						"dependsOn": [
+							{
+								"activity": "copy-ftp-to-raw",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "sink_raw",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"exists",
+								"lastModified"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "JsonReadSettings"
+							}
+						}
+					},
+					{
+						"name": "FileExists",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@activity('Get Metadata1').output.exists",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "LogFailureNotebook",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "FileExists",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/riniviw113@fisedo.com/src-sleep-analytics/Notebooks/LogFailureNoteBook"
+						},
+						"linkedServiceName": {
+							"referenceName": "lnk_ser_databricks",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"runFolder": {
+						"type": "String",
+						"defaultValue": "@formatDateTime(pipeline().TriggerTime,'yyyyMMdd_HHmmss')"
+					},
+					"logContent": {
+						"type": "String"
+					},
+					"year": {
+						"type": "String"
+					},
+					"month": {
+						"type": "String"
+					},
+					"day": {
+						"type": "String"
+					},
+					"fileName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-07-12T10:35:15Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/sink_raw')]",
+				"[concat(variables('factoryId'), '/datasets/sink_bronze')]",
+				"[concat(variables('factoryId'), '/datasets/source_dataset')]",
+				"[concat(variables('factoryId'), '/linkedServices/lnk_ser_databricks')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sink_bronze')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lank_ser_adls_bronze",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@concat(\n'source=ftp/year=',formatDateTime(pipeline().TriggerTime,'yyyy'),\n'/month=',formatDateTime(pipeline().TriggerTime,'MM'),\n'/day=',formatDateTime(pipeline().TriggerTime,'dd'),\n'/run_id=',variables('runFolder')\n)",
+							"type": "Expression"
+						},
+						"fileSystem": "bronze"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lank_ser_adls_bronze')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sink_raw')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_ftp_to_raw",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@concat(\n'source=ftp/sleep-data_',formatDateTime(pipeline().TriggerTime,'dd-MM-yyyy'))",
+							"type": "Expression"
+						},
+						"fileSystem": "raw"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"record_id": {
+							"type": "string"
+						},
+						"schema_version": {
+							"type": "string"
+						},
+						"patient_id": {
+							"type": "string"
+						},
+						"device_id": {
+							"type": "string"
+						},
+						"device_model": {
+							"type": "string"
+						},
+						"mask_type": {
+							"type": "string"
+						},
+						"patient_timezone": {
+							"type": "string"
+						},
+						"session_start_utc": {
+							"type": "string"
+						},
+						"session_end_utc": {
+							"type": "string"
+						},
+						"duration_minutes": {
+							"type": "integer"
+						},
+						"ahi": {
+							"type": "number"
+						},
+						"severity_label_device": {
+							"type": "string"
+						},
+						"avg_spo2_pct": {
+							"type": "number"
+						},
+						"min_spo2_pct": {
+							"type": "number"
+						},
+						"leak_rate_avg_lpm": {
+							"type": "number"
+						},
+						"leak_large_event_count": {
+							"type": "integer"
+						},
+						"mask_off_minutes": {
+							"type": "number"
+						},
+						"pressure_avg_cmh2o": {
+							"type": "number"
+						},
+						"pressure_95th_cmh2o": {
+							"type": "number"
+						},
+						"humidifier_setting": {
+							"type": "integer"
+						},
+						"events": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"event_id": {
+										"type": "string"
+									},
+									"event_type": {
+										"type": "string"
+									},
+									"event_timestamp_utc": {
+										"type": "string"
+									},
+									"duration_seconds": {
+										"type": "number"
+									},
+									"spo2_min_pct": {
+										"type": "null"
+									}
+								}
+							}
+						},
+						"ingestion_batch_id": {
+							"type": "string"
+						},
+						"source_export_ts_utc": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_ftp_to_raw')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/source_dataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "lnk_ser_FtpServer",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "FtpServerLocation",
+						"folderPath": "CPAP"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"record_id": {
+							"type": "string"
+						},
+						"schema_version": {
+							"type": "string"
+						},
+						"patient_id": {
+							"type": "string"
+						},
+						"device_id": {
+							"type": "string"
+						},
+						"device_model": {
+							"type": "string"
+						},
+						"mask_type": {
+							"type": "string"
+						},
+						"patient_timezone": {
+							"type": "string"
+						},
+						"session_start_utc": {
+							"type": "string"
+						},
+						"session_end_utc": {
+							"type": "string"
+						},
+						"duration_minutes": {
+							"type": "integer"
+						},
+						"ahi": {
+							"type": "number"
+						},
+						"severity_label_device": {
+							"type": "string"
+						},
+						"avg_spo2_pct": {
+							"type": "number"
+						},
+						"min_spo2_pct": {
+							"type": "number"
+						},
+						"leak_rate_avg_lpm": {
+							"type": "number"
+						},
+						"leak_large_event_count": {
+							"type": "integer"
+						},
+						"mask_off_minutes": {
+							"type": "number"
+						},
+						"pressure_avg_cmh2o": {
+							"type": "number"
+						},
+						"pressure_95th_cmh2o": {
+							"type": "number"
+						},
+						"humidifier_setting": {
+							"type": "integer"
+						},
+						"events": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"event_id": {
+										"type": "string"
+									},
+									"event_type": {
+										"type": "string"
+									},
+									"event_timestamp_utc": {
+										"type": "string"
+									},
+									"duration_seconds": {
+										"type": "number"
+									},
+									"spo2_min_pct": {
+										"type": "null"
+									}
+								}
+							}
+						},
+						"ingestion_batch_id": {
+							"type": "string"
+						},
+						"source_export_ts_utc": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/lnk_ser_FtpServer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/lank_ser_adls_bronze')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('lank_ser_adls_bronze_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('lank_ser_adls_bronze_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/lnk_ftp_to_raw')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('lnk_ftp_to_raw_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('lnk_ftp_to_raw_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/lnk_ser_FtpServer')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "FtpServer",
+				"typeProperties": {
+					"host": "[parameters('lnk_ser_FtpServer_properties_typeProperties_host')]",
+					"port": 21,
+					"enableSsl": true,
+					"enableServerCertificateValidation": false,
+					"authenticationType": "Basic",
+					"userName": "[parameters('lnk_ser_FtpServer_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('lnk_ser_FtpServer_password')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "SHIR-Runtime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/SHIR-Runtime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/lnk_ser_databricks')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-7405610438142164.4.azuredatabricks.net",
+					"accessToken": {
+						"type": "SecureString",
+						"value": "[parameters('lnk_ser_databricks_accessToken')]"
+					},
+					"newClusterNodeType": "Standard_DS3_v2",
+					"newClusterNumOfWorker": "2",
+					"newClusterSparkEnvVars": {
+						"PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+					},
+					"newClusterVersion": "13.3.x-scala2.12",
+					"clusterOption": "Fixed",
+					"newClusterInitScripts": []
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SHIR-Runtime')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "SelfHosted",
+				"description": "This integration runtime is used to connect Filezilla",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		}
+	]
+}

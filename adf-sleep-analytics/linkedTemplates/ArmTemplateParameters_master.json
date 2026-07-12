@@ -1,0 +1,39 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adf-sleep-analytics"
+		},
+		"lank_ser_adls_bronze_accountKey": {
+			"value": ""
+		},
+		"lnk_ftp_to_raw_accountKey": {
+			"value": ""
+		},
+		"lnk_ser_FtpServer_password": {
+			"value": ""
+		},
+		"lnk_ser_databricks_accessToken": {
+			"value": ""
+		},
+		"lank_ser_adls_bronze_properties_typeProperties_url": {
+			"value": "https://stsleepanalytics.dfs.core.windows.net/"
+		},
+		"lnk_ftp_to_raw_properties_typeProperties_url": {
+			"value": "https://stsleepanalytics.dfs.core.windows.net/"
+		},
+		"lnk_ser_FtpServer_properties_typeProperties_host": {
+			"value": "192.168.0.103"
+		},
+		"lnk_ser_FtpServer_properties_typeProperties_userName": {
+			"value": "adfuser"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
