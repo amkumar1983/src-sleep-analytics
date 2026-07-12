@@ -1,0 +1,15 @@
+{
+	"name": "adf-sleep-analytics",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "f082c3b2-e32c-4da3-ad0d-534898183857",
+		"tenantId": "0101b9e3-c231-4b96-93ed-c534c3f0a480"
+	}
+}

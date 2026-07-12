@@ -1,0 +1,21 @@
+{
+	"name": "lnk_ser_FtpServer",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "FtpServer",
+		"typeProperties": {
+			"host": "192.168.0.103",
+			"port": 21,
+			"enableSsl": true,
+			"enableServerCertificateValidation": false,
+			"authenticationType": "Basic",
+			"userName": "adfuser",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiI0YWYxZDk2Ni0xYzQ2LTQzMzktOWVmMy00ZGEyMTU0M2IwZTUiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "SHIR-Runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

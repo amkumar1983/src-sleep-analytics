@@ -1,0 +1,23 @@
+{
+	"name": "sink_bronze",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "lank_ser_adls_bronze",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@concat(\n'source=ftp/year=',formatDateTime(pipeline().TriggerTime,'yyyy'),\n'/month=',formatDateTime(pipeline().TriggerTime,'MM'),\n'/day=',formatDateTime(pipeline().TriggerTime,'dd'),\n'/run_id=',variables('runFolder')\n)",
+					"type": "Expression"
+				},
+				"fileSystem": "bronze"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

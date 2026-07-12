@@ -1,0 +1,116 @@
+{
+	"name": "sink_raw",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "lnk_ftp_to_raw",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@concat(\n'source=ftp/sleep-data_',formatDateTime(pipeline().TriggerTime,'dd-MM-yyyy'))",
+					"type": "Expression"
+				},
+				"fileSystem": "raw"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"record_id": {
+					"type": "string"
+				},
+				"schema_version": {
+					"type": "string"
+				},
+				"patient_id": {
+					"type": "string"
+				},
+				"device_id": {
+					"type": "string"
+				},
+				"device_model": {
+					"type": "string"
+				},
+				"mask_type": {
+					"type": "string"
+				},
+				"patient_timezone": {
+					"type": "string"
+				},
+				"session_start_utc": {
+					"type": "string"
+				},
+				"session_end_utc": {
+					"type": "string"
+				},
+				"duration_minutes": {
+					"type": "integer"
+				},
+				"ahi": {
+					"type": "number"
+				},
+				"severity_label_device": {
+					"type": "string"
+				},
+				"avg_spo2_pct": {
+					"type": "number"
+				},
+				"min_spo2_pct": {
+					"type": "number"
+				},
+				"leak_rate_avg_lpm": {
+					"type": "number"
+				},
+				"leak_large_event_count": {
+					"type": "integer"
+				},
+				"mask_off_minutes": {
+					"type": "number"
+				},
+				"pressure_avg_cmh2o": {
+					"type": "number"
+				},
+				"pressure_95th_cmh2o": {
+					"type": "number"
+				},
+				"humidifier_setting": {
+					"type": "integer"
+				},
+				"events": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"event_id": {
+								"type": "string"
+							},
+							"event_type": {
+								"type": "string"
+							},
+							"event_timestamp_utc": {
+								"type": "string"
+							},
+							"duration_seconds": {
+								"type": "number"
+							},
+							"spo2_min_pct": {
+								"type": "null"
+							}
+						}
+					}
+				},
+				"ingestion_batch_id": {
+					"type": "string"
+				},
+				"source_export_ts_utc": {
+					"type": "string"
+				}
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

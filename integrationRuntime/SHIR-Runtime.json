@@ -1,0 +1,7 @@
+{
+	"name": "SHIR-Runtime",
+	"properties": {
+		"type": "SelfHosted",
+		"description": "This integration runtime is used to connect Filezilla"
+	}
+}
