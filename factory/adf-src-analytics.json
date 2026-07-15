@@ -1,0 +1,15 @@
+{
+	"name": "adf-src-analytics",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "ac97eb91-2bb7-4055-a0e3-a5a2a4edca79",
+		"tenantId": "e349fe39-4470-47c2-9f18-e7b8dfdc53ef"
+	}
+}
